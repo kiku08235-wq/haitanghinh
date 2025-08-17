@@ -1,0 +1,69 @@
+-- Haidz Invisible GUI v2 - Full Lua
+-- Fix lỗi toggle không hoạt động
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Hàm ẩn/hiện nhân vật
+local function setInvisible(state)
+    Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    for _, part in pairs(Character:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            part.Transparency = state and 1 or 0
+        end
+    end
+end
+
+-- Tạo GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HaidzInvisibleGUI"
+ScreenGui.Parent = game.CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.7, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+Title.Text = "Haidz Invisible"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+Title.Parent = Frame
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 45)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 18
+ToggleBtn.Text = "🔴 Bật Tàng Hình"
+ToggleBtn.Parent = Frame
+
+-- Biến trạng thái
+local invisible = false
+
+-- Sự kiện bật/tắt
+ToggleBtn.MouseButton1Click:Connect(function()
+    invisible = not invisible
+    setInvisible(invisible)
+    if invisible then
+        ToggleBtn.Text = "🟢 Tắt Tàng Hình"
+    else
+        ToggleBtn.Text = "🔴 Bật Tàng Hình"
+    end
+end)
+
+-- Khi nhân vật respawn thì vẫn giữ toggle
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    if invisible then
+        task.wait(1)
+        setInvisible(true)
+    end
+end)
