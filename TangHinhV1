@@ -1,0 +1,118 @@
+-- Haidz Invisible GUI v1.7 (fix toggle + thêm 🔴🟢 trạng thái)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Xóa GUI cũ nếu còn
+if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("HaidzInvisibleGui") then
+    LocalPlayer.PlayerGui.HaidzInvisibleGui:Destroy()
+end
+
+-- Tạo GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HaidzInvisibleGui"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false -- menu vẫn giữ khi chết
+
+-- Frame
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 220, 0, 120)
+Frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Text = " Haidz Invisible"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.Parent = Frame
+
+-- Toggle Button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.9, 0, 0, 40)
+ToggleButton.Position = UDim2.new(0.05, 0, 0.35, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+ToggleButton.Text = "🔴 Bật Tàng Hình"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.TextSize = 16
+ToggleButton.Parent = Frame
+
+-- Hide/Show Menu Button
+local HideButton = Instance.new("TextButton")
+HideButton.Size = UDim2.new(0, 120, 0, 30)
+HideButton.Position = UDim2.new(1, 5, 0, 0)
+HideButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+HideButton.Text = "Ẩn/Hiện Haidz"
+HideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+HideButton.Font = Enum.Font.SourceSansBold
+HideButton.TextSize = 14
+HideButton.Parent = ScreenGui
+
+-- Variables
+local Invisible = false
+
+-- Function: set invisible
+local function setInvisible(state)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    for _, part in pairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            -- ❌ bỏ qua Tool Handle
+            if part:IsDescendantOf(char:FindFirstChildOfClass("Tool")) then
+                continue
+            end
+
+            if state then
+                if part.Name == "HumanoidRootPart" then
+                    part.Transparency = 1
+                    part.LocalTransparencyModifier = 1
+                else
+                    part.Transparency = 0.7
+                    part.LocalTransparencyModifier = 0.7
+                end
+                part.CanCollide = false
+            else
+                if part.Name == "HumanoidRootPart" then
+                    part.Transparency = 1 -- RootPart luôn ẩn
+                    part.LocalTransparencyModifier = 1
+                else
+                    part.Transparency = 0
+                    part.LocalTransparencyModifier = 0
+                end
+                part.CanCollide = true
+            end
+        elseif part:IsA("Decal") then
+            part.Transparency = state and 1 or 0
+        elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
+            part.Enabled = not state
+        end
+    end
+    -- Cập nhật nút với 🔴🟢
+    ToggleButton.Text = state and "🟢 Tắt Tàng Hình" or "🔴 Bật Tàng Hình"
+end
+
+-- Button Clicks
+ToggleButton.MouseButton1Click:Connect(function()
+    Invisible = not Invisible
+    setInvisible(Invisible)
+end)
+HideButton.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+-- Khi respawn: reset invisible về off
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Invisible = false
+    ToggleButton.Text = "🔴 Bật Tàng Hình"
+    task.wait(1)
+    if char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.Transparency = 1
+        char.HumanoidRootPart.LocalTransparencyModifier = 1
+    end
+end)
