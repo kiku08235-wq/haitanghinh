@@ -1,0 +1,111 @@
+-- Haidz Invisible GUI v3 (ẩn cả dao/súng + accessories + fix khối thân)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Lưu transparency cũ để khôi phục
+local oldTransparency = {}
+
+local function setInvisible(state)
+    Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    
+    for _, obj in pairs(Character:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("Decal") then
+            if state then
+                oldTransparency[obj] = obj.Transparency
+                obj.Transparency = 1
+            else
+                if oldTransparency[obj] ~= nil then
+                    obj.Transparency = oldTransparency[obj]
+                else
+                    obj.Transparency = 0
+                end
+            end
+        elseif obj:IsA("Accessory") and obj:FindFirstChild("Handle") then
+            if state then
+                oldTransparency[obj.Handle] = obj.Handle.Transparency
+                obj.Handle.Transparency = 1
+            else
+                if oldTransparency[obj.Handle] ~= nil then
+                    obj.Handle.Transparency = oldTransparency[obj.Handle]
+                else
+                    obj.Handle.Transparency = 0
+                end
+            end
+        end
+    end
+    
+    -- Ẩn tool (dao/súng) nếu đang equip
+    for _, tool in pairs(Character:GetChildren()) do
+        if tool:IsA("Tool") then
+            for _, part in pairs(tool:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then
+                    if state then
+                        oldTransparency[part] = part.Transparency
+                        part.Transparency = 1
+                    else
+                        if oldTransparency[part] ~= nil then
+                            part.Transparency = oldTransparency[part]
+                        else
+                            part.Transparency = 0
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Tạo GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HaidzInvisibleGUI"
+ScreenGui.Parent = game.CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.7, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+Title.Text = "Haidz Invisible"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+Title.Parent = Frame
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 45)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 18
+ToggleBtn.Text = "🔴 Bật Tàng Hình"
+ToggleBtn.Parent = Frame
+
+-- Biến trạng thái
+local invisible = false
+
+-- Toggle
+ToggleBtn.MouseButton1Click:Connect(function()
+    invisible = not invisible
+    setInvisible(invisible)
+    if invisible then
+        ToggleBtn.Text = "🟢 Tắt Tàng Hình"
+    else
+        ToggleBtn.Text = "🔴 Bật Tàng Hình"
+    end
+end)
+
+-- Khi respawn thì giữ trạng thái
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    if invisible then
+        task.wait(1)
+        setInvisible(true)
+    end
+end)
