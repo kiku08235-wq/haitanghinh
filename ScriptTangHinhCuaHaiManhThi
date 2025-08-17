@@ -1,0 +1,107 @@
+--// Haidz Invisibility Hub v3.0
+--// Tàng hình toàn diện (ẩn người + tên + phụ kiện + rootpart) nhưng không mất tóc/phụ kiện
+--// Người dùng thấy mình mờ mờ để dễ điều khiển
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Tạo ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HaidzInvisibilityGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.5, -100, 0.1, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Frame.Active = true
+Frame.Draggable = true
+
+local ToggleButton = Instance.new("TextButton", Frame)
+ToggleButton.Size = UDim2.new(1,0,0.5,0)
+ToggleButton.Position = UDim2.new(0,0,0,0)
+ToggleButton.Text = "🟢 Bật / Tắt Tàng Hình"
+ToggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+
+local StatusLabel = Instance.new("TextLabel", Frame)
+StatusLabel.Size = UDim2.new(1,0,0.5,0)
+StatusLabel.Position = UDim2.new(0,0,0.5,0)
+StatusLabel.Text = "Trạng thái: 🟢 Hiện"
+StatusLabel.TextColor3 = Color3.fromRGB(255,255,255)
+StatusLabel.BackgroundColor3 = Color3.fromRGB(35,35,35)
+
+-- Hàm set tàng hình
+local Invisible = false
+local OriginalStates = {}
+
+local function SetTransparency(char, value, forLocal)
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            if forLocal then
+                part.LocalTransparencyModifier = value -- chỉ mình thấy
+            else
+                part.Transparency = value -- người khác thấy
+            end
+        end
+    end
+end
+
+local function ApplyInvisibility()
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    -- Ẩn toàn bộ với người khác
+    SetTransparency(char, 1, false)
+
+    -- Làm mờ với chính mình (0.4 = hơi trong suốt)
+    SetTransparency(char, 0.4, true)
+
+    -- Ẩn name tag
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.NameDisplayDistance = 0
+        hum.HealthDisplayDistance = 0
+    end
+
+    StatusLabel.Text = "Trạng thái: 🔴 Tàng hình"
+end
+
+local function RemoveInvisibility()
+    local char = LocalPlayer.Character
+    if not char then return end
+
+    -- Khôi phục lại
+    SetTransparency(char, 0, false)
+    SetTransparency(char, 0, true)
+
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.NameDisplayDistance = 100
+        hum.HealthDisplayDistance = 100
+    end
+
+    StatusLabel.Text = "Trạng thái: 🟢 Hiện"
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    Invisible = not Invisible
+    if Invisible then
+        ApplyInvisibility()
+    else
+        RemoveInvisibility()
+    end
+end)
+
+-- Tự bật lại khi respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("HumanoidRootPart")
+    if Invisible then
+        task.wait(1)
+        ApplyInvisibility()
+    else
+        RemoveInvisibility()
+    end
+end)
